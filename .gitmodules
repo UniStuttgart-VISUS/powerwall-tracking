@@ -1,0 +1,6 @@
+[submodule "external/glm"]
+	path = external/glm
+	url = https://github.com/g-truc/glm.git
+[submodule "external/vrpn"]
+	path = external/vrpn
+	url = https://github.com/vrpn/vrpn.git

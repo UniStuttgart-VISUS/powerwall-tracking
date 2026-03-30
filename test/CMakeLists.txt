@@ -2,36 +2,31 @@
 # TEST
 ###############################################################################
 
+project(test)
+message(STATUS "Configure '${PROJECT_NAME}'")
 
-# Stop if the user tries to build this plugin with Linux.
-if(WIN32)
+# TARGET DEFINITION
+add_executable(${PROJECT_NAME} 
+    ${TEST_HEADERS} 
+    ${TEST_SOURCES}
+)
 
-    project(test)
-    message(STATUS "[${PROJECT_NAME}] configuring ...")
+target_sources(${PROJECT_NAME} PRIVATE
+    ### SOURCE ###
+    "src/test.cpp"
+)
+include_directories("${PROJECT_SOURCE_DIR}/src" "${PROJECT_SOURCE_DIR}/include")
 
-    set(TRACKING_NAME "tracking")
+target_include_directories(glm INTERFACE glm)
+target_include_directories(vrpn INTERFACE vrpn)
+target_include_directories(natnet INTERFACE ${NATNET_INCLUDE_DIR})
+target_include_directories(tracking INTERFACE "${CMAKE_INSTALL_PREFIX}/tracking/include")
 
-    file(GLOB_RECURSE TEST_HEADERS RELATIVE ${PROJECT_SOURCE_DIR} "include/*.h")
-    file(GLOB_RECURSE TEST_SOURCES RELATIVE ${PROJECT_SOURCE_DIR} "src/*.cpp")
-    
-    include_directories("${CMAKE_INSTALL_PREFIX}/include" "${PROJECT_SOURCE_DIR}/src" "${PROJECT_SOURCE_DIR}/include")
+target_link_libraries(${PROJECT_NAME} PUBLIC tracking natnet vrpn glm)
+     
+# INSTALL TARGET
+install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}/bin")
 
-    # TARGET DEFINITION
-    add_executable(${PROJECT_NAME} 
-        ${TEST_HEADERS} 
-        ${TEST_SOURCES}
-    )
-    add_dependencies(${PROJECT_NAME} ${TRACKING_NAME})
-    target_link_libraries(${PROJECT_NAME} PRIVATE ${TRACKING_NAME})
-
-    # INSTALL TARGET
-    install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION "bin")
-
-    # Grouping in Visual Studio
-    set_target_properties(${PROJECT_NAME} PROPERTIES FOLDER plugins)
-    source_group("Header Files" FILES ${TEST_HEADERS})
-    source_group("Source Files" FILES ${TEST_SOURCES})
-
-    message(STATUS "[${PROJECT_NAME}] DONE.")
-        
-endif(WIN32)
+# Grouping in Visual Studio
+source_group("Header Files" FILES ${TEST_HEADERS})
+source_group("Source Files" FILES ${TEST_SOURCES})
