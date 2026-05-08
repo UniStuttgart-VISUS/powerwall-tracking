@@ -8,13 +8,13 @@ Additional detailed information and documentation can be found in the `documenta
 
 ## Building
 
+Building was tested with Visaul Studio 17 (2022) for x64 architecture.
 Since the required library NatNet is not available for Linux and the library is only usable in combination with the Powerwall, it only works with Windows.
-- [NatNet](http://optitrack.com/products/natnet-sdk/) is included in this package and it is required for this library to build. 
-- [VRPN](https://github.com/vrpn/vrpn.git) is also required and it is automatically installed as submodule.
-- [glm](https://github.com/g-truc/glm.git) is used to do all the math.
 
-**NOTES:** 
-- Building was tested with Visaul Studio 17 (2022) for x64 architecture.
+### External dependencies:
+- [NatNet](http://optitrack.com/products/natnet-sdk/) is included in this package and it is required for this library to build. 
+- [VRPN](https://github.com/vrpn/vrpn.git) is also required and it is automatically installed via submodule.
+- [glm](https://github.com/g-truc/glm.git) is used to do all the math and is also automatically installed via submodule.
 
 
 ## Interface Classes
@@ -28,6 +28,7 @@ Only one `Tracker` class should be declared at a time.
 The `TrackingUtilizer` manipulates the raw data from the `Tracker`. By changing the orientation of a pointing device while pressing the associated button, camera parameters can be manipulated. Further the intersection of the pointing device with the powerwall as well as the field of view is provided (in relative screen space coordinates). The class also allows to acccess the raw tracking data.
 Multiple `TrackingUtilizers` can be connected to the `Tracker` simultaneously. Each `TrackingUtilizer` utilizes only one rigid body (motion or pointing device) and and button device. They are defined by their names in the corresponding parameters.
 
+
 ## Test Program
 
 * Configure and generate projects with `cmake`.
@@ -38,7 +39,8 @@ Multiple `TrackingUtilizers` can be connected to the `Tracker` simultaneously. E
 * Place rigid body inside of tracking area.
 * Start test program: `bin/test.exe`.
 
-The given default parameters in the example test program `test/src/test.cpp` fit the current VISUS tracking setup (Dezember 2019).
+The given default parameters in the example test program `test/src/test.cpp` fit the current VISUS tracking setup (March 2026).
+
 
 ## Troubleshooting
 

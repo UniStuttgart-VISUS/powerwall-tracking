@@ -6,8 +6,8 @@ get_cmake_property(_cache_before CACHE_VARIABLES)
 
 # glm
 message(STATUS "    Configure 'glm'")
-add_library(glm INTERFACE)
-target_include_directories(glm INTERFACE glm)
+add_library(pwtglm INTERFACE)
+target_include_directories(pwtglm INTERFACE pwtglm)
 
 # vrpn
 message(STATUS "    Configure 'vrpn'")

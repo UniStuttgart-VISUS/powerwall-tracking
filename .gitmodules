@@ -1,5 +1,5 @@
-[submodule "external/glm"]
-	path = external/glm
+[submodule "external/pwtglm"]
+	path = external/pwtglm
 	url = https://github.com/g-truc/glm.git
 [submodule "external/vrpn"]
 	path = external/vrpn

@@ -17,12 +17,12 @@ target_sources(${PROJECT_NAME} PRIVATE
 )
 include_directories("${PROJECT_SOURCE_DIR}/src" "${PROJECT_SOURCE_DIR}/include")
 
-target_include_directories(glm INTERFACE glm)
+target_include_directories(pwtglm INTERFACE pwtglm)
 target_include_directories(vrpn INTERFACE vrpn)
 target_include_directories(natnet INTERFACE ${NATNET_INCLUDE_DIR})
 target_include_directories(tracking INTERFACE "${CMAKE_INSTALL_PREFIX}/tracking/include")
 
-target_link_libraries(${PROJECT_NAME} PUBLIC tracking natnet vrpn glm)
+target_link_libraries(${PROJECT_NAME} PUBLIC tracking natnet vrpn pwtglm)
      
 # INSTALL TARGET
 install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}/bin")

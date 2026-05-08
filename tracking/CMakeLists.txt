@@ -26,7 +26,7 @@ include_directories("${PROJECT_SOURCE_DIR}/include" "${PROJECT_SOURCE_DIR}/src")
 string(TOUPPER ${PROJECT_NAME} EXPORT_NAME)
 target_compile_definitions(${PROJECT_NAME} PRIVATE "${EXPORT_NAME}_EXPORTS")
 
-target_link_libraries(${PROJECT_NAME} PUBLIC natnet vrpn glm)
+target_link_libraries(${PROJECT_NAME} PUBLIC natnet vrpn pwtglm)
 
 # INSTALLATION
 install(TARGETS ${PROJECT_NAME} RUNTIME DESTINATION "${CMAKE_INSTALL_PREFIX}/bin")
