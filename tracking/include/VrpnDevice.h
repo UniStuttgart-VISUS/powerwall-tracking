@@ -1,5 +1,5 @@
-// <copyright file="VrpnDevice.cpp" company="Visualisierungsinstitut der Universität Stuttgart">
-// Copyright © 2026 Visualisierungsinstitut der Universität Stuttgart.
+// <copyright file="VrpnDevice.cpp" company="Visualisierungsinstitut der Universitï¿½t Stuttgart">
+// Copyright ï¿½ 2026 Visualisierungsinstitut der Universitï¿½t Stuttgart.
 // Licensed under the MIT licence. See LICENCE file for details.
 // </copyright>
 // <author>Matthias Braun</author>
@@ -9,6 +9,7 @@
 
 #include <string>
 #include <sstream>
+#include <iostream>
 
 #include "vrpn_Tracker.h"
 #include "vrpn_Button.h"
