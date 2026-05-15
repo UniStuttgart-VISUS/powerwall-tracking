@@ -33,10 +33,8 @@ namespace tracking {
 
 		/** Data structure for setting PARAMETERs as batch. */
 		struct Params {
-			const char* device_name;     /** The VRPN button device name. */
-			size_t                                      device_name_len;
-			const char* server_name;     /** The VRPN server name.        */
-			size_t                                      server_name_len;
+			std::string                                 device_name;     /** The VRPN button device name. */
+			std::string                                 server_ip;       /** The VRPN server IP address.        */
 			unsigned int                                port;            /** The VRPN port.               */
 			typename tracking::VrpnDevice<R>::Protocols protocol;        /** The VRPN protocol.           */
 		};
@@ -122,7 +120,7 @@ namespace tracking {
 		* VRPN server name.
 		* The sever IP address or server host name running vrpn and hosting the device.
 		*/
-		std::string m_server_name;
+		std::string m_server_ip;
 
 		/**
 		* The port used for connecting to the vrpn server.
@@ -156,7 +154,7 @@ tracking::VrpnDevice<R>::VrpnDevice(void)
 	, m_connected(false)
 	, m_remote_device(nullptr)
 	, m_device_name("ControlBox")
-	, m_server_name("mini")
+	, m_server_ip("129.69.205.86")
 	, m_port(3884)
 	, m_protocol(VrpnDevice<R>::Protocols::VRPN_TCP) {
 
@@ -170,42 +168,14 @@ bool tracking::VrpnDevice<R>::Initialise(const typename VrpnDevice<R>::Params& p
 	bool check = true;
 	this->m_initialised = false;
 
-	std::string device_name;
-	try {
-		device_name = std::string(params.device_name);
-		if (device_name.length() != params.device_name_len) {
-			std::cerr << std::endl << "[ERROR] [VrpnDevice] String \"device_name\" has not expected length. " <<
-				"[" << __FILE__ << ", " << __FUNCTION__ << ", line " << __LINE__ << "]" << std::endl << std::endl;
-			check = false;
-		}
-		if (device_name.empty()) {
-			std::cerr << std::endl << "[ERROR] [VrpnDevice] Parameter \"device_name\" must not be empty string. " <<
-				"[" << __FILE__ << ", " << __FUNCTION__ << ", line " << __LINE__ << "]" << std::endl << std::endl;
-		}
-	}
-	catch (const std::exception& e) {
-		std::cerr << std::endl << "[ERROR] [Tracker] Error reading string param 'active_node': " << e.what() <<
-			" [" << __FILE__ << ", " << __FUNCTION__ << ", line " << __LINE__ << "]" << std::endl << std::endl;
-		check = false;
+	if (params.device_name.empty()) {
+		std::cerr << std::endl << "[ERROR] [VrpnDevice] Parameter \"device_name\" must not be empty string. " <<
+			"[" << __FILE__ << ", " << __FUNCTION__ << ", line " << __LINE__ << "]" << std::endl << std::endl;
 	}
 
-	std::string server_name;
-	try {
-		server_name = std::string(params.server_name);
-		if (server_name.length() != params.server_name_len) {
-			std::cerr << std::endl << "[ERROR] [VrpnDevice] String \"server_name\" has not expected length. " <<
-				"[" << __FILE__ << ", " << __FUNCTION__ << ", line " << __LINE__ << "]" << std::endl << std::endl;
-			check = false;
-		}
-		if (server_name.empty()) {
-			std::cerr << std::endl << "[ERROR] [VrpnDevice] Parameter \"server_name\" must not be empty string. " <<
-				"[" << __FILE__ << ", " << __FUNCTION__ << ", line " << __LINE__ << "]" << std::endl << std::endl;
-			check = false;
-		}
-	}
-	catch (const std::exception& e) {
-		std::cerr << std::endl << "[ERROR] [Tracker] Error reading string param 'active_node': " << e.what() <<
-			" [" << __FILE__ << ", " << __FUNCTION__ << ", line " << __LINE__ << "]" << std::endl << std::endl;
+	if (params.server_ip.empty()) {
+		std::cerr << std::endl << "[ERROR] [VrpnDevice] Parameter \"server_ip\" must not be empty string. " <<
+			"[" << __FILE__ << ", " << __FUNCTION__ << ", line " << __LINE__ << "]" << std::endl << std::endl;
 		check = false;
 	}
 
@@ -216,8 +186,8 @@ bool tracking::VrpnDevice<R>::Initialise(const typename VrpnDevice<R>::Params& p
 	}
 
 	if (check) {
-		this->m_device_name = device_name;
-		this->m_server_name = server_name;
+		this->m_device_name = params.device_name;
+		this->m_server_ip = params.server_ip;
 		this->m_port = params.port;
 		this->m_protocol = params.protocol;
 
@@ -232,7 +202,7 @@ bool tracking::VrpnDevice<R>::Initialise(const typename VrpnDevice<R>::Params& p
 template <class R>
 void tracking::VrpnDevice<R>::print_params(void) {
 	std::cout << "[PARAMETER] [VrpnDevice] Device Name:                   " << this->m_device_name.c_str() << std::endl;
-	std::cout << "[PARAMETER] [VrpnDevice] Server Name:                   " << this->m_server_name.c_str() << std::endl;
+	std::cout << "[PARAMETER] [VrpnDevice] Server Name:                   " << this->m_server_ip.c_str() << std::endl;
 	std::cout << "[PARAMETER] [VrpnDevice] Port:                          " << this->m_port << std::endl;
 	std::cout << "[PARAMETER] [VrpnDevice] Protocol:                      " << (int)this->m_protocol << std::endl;
 }
@@ -262,14 +232,14 @@ bool tracking::VrpnDevice<R>::Connect(void) {
 	// Translate protocol to string
 	std::string prot = "";
 	switch (this->m_protocol) {
-	case(VrpnDevice<R>::Protocols::VRPN_TCP): prot = "tcp";  break;
-	case(VrpnDevice<R>::Protocols::VRPN_UDP): prot = "udp";  break;
-	default: break;
+		case(VrpnDevice<R>::Protocols::VRPN_TCP): prot = "tcp";  break;
+		case(VrpnDevice<R>::Protocols::VRPN_UDP): prot = "udp";  break;
+		default: break;
 	}
 
-	/// URL: [device_name]@[protocol]://[server_name]:[port]
+	/// URL: [device_name]@[protocol]://[server_ip]:[port]
 	std::ostringstream str;
-	str << this->m_device_name.c_str() << "@" << prot.c_str() << "://" << this->m_server_name.c_str() << ":" << this->m_port;
+	str << this->m_device_name.c_str() << "@" << prot.c_str() << "://" << this->m_server_ip.c_str() << ":" << this->m_port;
 	url = str.str();
 
 	std::cout << "[INFO] [VrpnDevice] Connecting to VRPN server: " << url.c_str() << std::endl;
@@ -292,7 +262,7 @@ bool tracking::VrpnDevice<R>::Connect(void) {
 	/// Create remote_device object calling CTOR with make_unique() for type R (e.g. vrpn_Button_remote_device, vrpn_Tracker_remote_device)
 	this->m_remote_device = std::make_unique<R>(url.c_str(), connection);
 	this->m_remote_device->shutup = true;
-	std::cout << "[INFO] [VrpnDevice] >>> AVAILABEL BUTTON DEVICE: \"" << this->m_device_name.c_str() << "\"" << std::endl;
+	std::cout << "[INFO] [VrpnDevice] >>> AVAILABLE BUTTON DEVICE: \"" << this->m_device_name.c_str() << "\"" << std::endl;
 
 	std::cout << "[INFO] [VrpnDevice] Successfully connected to VRPN server." << std::endl;
 

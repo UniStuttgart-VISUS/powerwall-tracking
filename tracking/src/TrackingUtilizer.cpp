@@ -87,38 +87,9 @@ bool tracking::TrackingUtilizer::Initialise(const tracking::TrackingUtilizer::Pa
 	}
 	this->m_tracker = m_tracker;
 
-	std::string btn_device_name;
-	try {
-		btn_device_name = std::string(params.btn_device_name);
-		if (btn_device_name.length() != params.btn_device_name_len) {
-			std::cerr << std::endl << "[ERROR] [TrackingUtilizer] String \"btn_device_name\" has not expected length. " <<
-				"[" << __FILE__ << ", " << __FUNCTION__ << ", line " << __LINE__ << "]" << std::endl << std::endl;
-			check = false;
-		}
-	}
-	catch (const std::exception& e) {
-		std::cerr << std::endl << "[ERROR] [TrackingUtilizer] Error reading string param 'btn_device_name': " << e.what() <<
-			" [" << __FILE__ << ", " << __FUNCTION__ << ", line " << __LINE__ << "]" << std::endl << std::endl;
-		check = false;
-	}
-
-	std::string rigid_body_name;
-	try {
-		rigid_body_name = std::string(params.rigid_body_name);
-		if (rigid_body_name.length() != params.rigid_body_name_len) {
-			std::cerr << std::endl << "[ERROR] [TrackingUtilizer] String \"rigid_body_name\" has not expected length. " <<
-				"[" << __FILE__ << ", " << __FUNCTION__ << ", line " << __LINE__ << "]" << std::endl << std::endl;
-			check = false;
-		}
-		if (rigid_body_name.empty()) {
-			std::cerr << std::endl << "[ERROR] [TrackingUtilizer] Parameter \"rigid_body_name\" must not be empty string. " <<
-				"[" << __FILE__ << ", " << __FUNCTION__ << ", line " << __LINE__ << "]" << std::endl << std::endl;
-			check = false;
-		}
-	}
-	catch (const std::exception& e) {
-		std::cerr << std::endl << "[ERROR] [TrackingUtilizer] Error reading string param 'rigid_body_name': " << e.what() <<
-			" [" << __FILE__ << ", " << __FUNCTION__ << ", line " << __LINE__ << "]" << std::endl << std::endl;
+	if (params.rigid_body_name.empty()) {
+		std::cerr << std::endl << "[ERROR] [TrackingUtilizer] Parameter \"rigid_body_name\" must not be empty string. " <<
+			"[" << __FILE__ << ", " << __FUNCTION__ << ", line " << __LINE__ << "]" << std::endl << std::endl;
 		check = false;
 	}
 
@@ -194,22 +165,22 @@ bool tracking::TrackingUtilizer::Initialise(const tracking::TrackingUtilizer::Pa
 		check = false;
 	}
 
-	this->limit<float>(this->m_physical_height, 0.0f, TRACKING_FLOAT_MAX, changed);
+	this->limit<float>(params.physical_height, 0.0f, TRACKING_FLOAT_MAX, changed);
 	if (changed) {
-		std::cerr << std::endl << "[ERROR] [TrackingUtilizer] Parameter \"m_physical_height\" must be in range [" << 0.0f << "," << TRACKING_FLOAT_MAX << "]. " <<
+		std::cerr << std::endl << "[ERROR] [TrackingUtilizer] Parameter \"physical_height\" must be in range [" << 0.0f << "," << TRACKING_FLOAT_MAX << "]. " <<
 			"[" << __FILE__ << ", " << __FUNCTION__ << ", line " << __LINE__ << "]" << std::endl << std::endl;
 		check = false;
 	}
-	this->limit<float>(this->m_physical_width, 0.0f, TRACKING_FLOAT_MAX, changed);
+	this->limit<float>(params.physical_width, 0.0f, TRACKING_FLOAT_MAX, changed);
 	if (changed) {
-		std::cerr << std::endl << "[ERROR] [TrackingUtilizer] Parameter \"m_physical_width\" must be in range [" << 0.0f << "," << TRACKING_FLOAT_MAX << "]. " <<
+		std::cerr << std::endl << "[ERROR] [TrackingUtilizer] Parameter \"physical_width\" must be in range [" << 0.0f << "," << TRACKING_FLOAT_MAX << "]. " <<
 			"[" << __FILE__ << ", " << __FUNCTION__ << ", line " << __LINE__ << "]" << std::endl << std::endl;
 		check = false;
 	}
 
 	if (check) {
-		this->m_button_device_name = btn_device_name;
-		this->m_rigid_body_name = rigid_body_name;
+		this->m_button_device_name = params.btn_device_name;
+		this->m_rigid_body_name = params.rigid_body_name;
 		this->m_select_button = params.select_btn;
 		this->m_rotate_button = params.rotate_btn;
 		this->m_translate_button = params.translate_btn;
@@ -227,6 +198,11 @@ bool tracking::TrackingUtilizer::Initialise(const tracking::TrackingUtilizer::Pa
 		this->m_fov_hori_angle = params.fov_horiz_angle;
 		this->m_fov_vert_angle = params.fov_vert_angle;
 		this->m_fov_aspect_ratio = params.fov_aspect_ratio;
+		this->m_physical_height = params.physical_height;
+		this->m_physical_width = params.physical_width;
+		this->m_physical_origin = params.physical_origin;
+		this->m_physical_x_dir = params.physical_x_dir;
+		this->m_physical_y_dir = params.physical_y_dir;
 
 		this->m_current_position = { TRACKING_FLOAT_MAX, TRACKING_FLOAT_MAX, TRACKING_FLOAT_MAX };
 		this->m_current_intersection = { TRACKING_FLOAT_MAX, TRACKING_FLOAT_MAX };
@@ -235,10 +211,10 @@ bool tracking::TrackingUtilizer::Initialise(const tracking::TrackingUtilizer::Pa
 		this->m_current_fov[2] = { TRACKING_FLOAT_MAX, TRACKING_FLOAT_MAX };
 		this->m_current_fov[3] = { TRACKING_FLOAT_MAX, TRACKING_FLOAT_MAX };
 
-		this->print_params();
-		this->m_initialised = true;
-
+		// Overwrite parameters with values from config file
 		this->m_initialised = this->read_params_from_file();
+
+		this->print_params();
 	}
 
 	return this->m_initialised;
@@ -279,11 +255,12 @@ void tracking::TrackingUtilizer::print_params(void) {
 
 bool tracking::TrackingUtilizer::read_params_from_file(void) {
 
-	std::string line, tag, name;
+	std::string line, tag;
 	float x, y, z, w;
 	bool is_calibration_available = false;
 
-	const std::string filename = "tracking.conf";
+	const std::string filename = TRACKING_CONFIG_FILENAME; // defined in cmake
+
 	std::ifstream file(filename);
 	if (!file.good()) {
 		std::cerr << std::endl << "[ERROR] [TrackingUtilizer] Failed to open \"" << filename.c_str() << "\" for reading. " <<
@@ -293,17 +270,25 @@ bool tracking::TrackingUtilizer::read_params_from_file(void) {
 	unsigned int lineNmbr = 1;
 	while (std::getline(file, line))
 	{
-		std::istringstream istream(line);
-		if (!(istream >> tag)) {
+		if (line == "") {
+			lineNmbr++;
+			continue; // Ignore empty lines
+		}
+
+		std::istringstream linestream(line);
+		if (!(linestream >> tag)) {
 			std::cerr << std::endl << "[ERROR] [TrackingUtilizer] Can not read line tag in \"" << filename.c_str() << "\" in line number: " << lineNmbr << " " <<
 				"[" << __FILE__ << ", " << __FUNCTION__ << ", line " << __LINE__ << "]" << std::endl << std::endl;
 			break;
 		}
 
-		if (tag[0] == '#') { // Ignore comment lines
+		if (tag[0] == '#') {
+			lineNmbr++;
+			continue; // Ignore commented lines
 		}
-		else if (tag == "PHYSICAL_SCREEN_HEIGHT") {
-			if (!(istream >> x)) {
+
+		if (tag == "PHYSICAL_SCREEN_HEIGHT") {
+			if (!(linestream >> x)) {
 				std::cerr << std::endl << "[ERROR] [TrackingUtilizer] Can not read value for PHYSICAL_SCREEN_HEIGHT in \"" << filename.c_str() << "\" in line number: " << lineNmbr << " " <<
 					"[" << __FILE__ << ", " << __FUNCTION__ << ", line " << __LINE__ << "]" << std::endl << std::endl;
 				file.close();
@@ -312,7 +297,7 @@ bool tracking::TrackingUtilizer::read_params_from_file(void) {
 			this->m_physical_height = x;
 		}
 		else if (tag == "PHYSICAL_SCREEN_WIDTH") {
-			if (!(istream >> x)) {
+			if (!(linestream >> x)) {
 				std::cerr << std::endl << "[ERROR] [TrackingUtilizer] Can not read value for PHYSICAL_SCREEN_WIDTH in \"" << filename.c_str() << "\" in line number: " << lineNmbr << " " <<
 					"[" << __FILE__ << ", " << __FUNCTION__ << ", line " << __LINE__ << "]" << std::endl << std::endl;
 				file.close();
@@ -321,41 +306,42 @@ bool tracking::TrackingUtilizer::read_params_from_file(void) {
 			this->m_physical_width = x;
 		}
 		else if (tag == "PHYSICAL_SCREEN_ORIGIN") {
-			if (!(istream >> x >> y >> z)) {
+			if (!(linestream >> x >> y >> z)) {
 				std::cerr << std::endl << "[ERROR] [TrackingUtilizer] Can not read values for PHYSICAL_SCREEN_ORIGIN in \"" << filename.c_str() << "\" in line number: " << lineNmbr << " " <<
 					"[" << __FILE__ << ", " << __FUNCTION__ << ", line " << __LINE__ << "]" << std::endl << std::endl;
 				file.close();
 				break;
 			}
-			this->m_physical_origin = { x, y, z };
+			this->m_physical_origin = glm::vec3(x, y, z);
 		}
 		else if (tag == "PHYSICAL_SCREEN_X_DIR") {
-			if (!(istream >> x >> y >> z)) {
+			if (!(linestream >> x >> y >> z)) {
 				std::cerr << std::endl << "[ERROR] [TrackingUtilizer] Can not read values for PHYSICAL_SCREEN_X_DIR in \"" << filename.c_str() << "\" in line number: " << lineNmbr << " " <<
 					"[" << __FILE__ << ", " << __FUNCTION__ << ", line " << __LINE__ << "]" << std::endl << std::endl;
 				file.close();
 				break;
 			}
-			this->m_physical_x_dir = { x, y, z };
+			this->m_physical_x_dir = glm::vec3(x, y, z);
 		}
 		else if (tag == "PHYSICAL_SCREEN_Y_DIR") {
-			if (!(istream >> x >> y >> z)) {
+			if (!(linestream >> x >> y >> z)) {
 				std::cerr << std::endl << "[ERROR] [TrackingUtilizer] Can not read values for PHYSICAL_SCREEN_Y_DIR in \"" << filename.c_str() << "\" in line number: " << lineNmbr << " " <<
 					"[" << __FILE__ << ", " << __FUNCTION__ << ", line " << __LINE__ << "]" << std::endl << std::endl;
 				file.close();
 				break;
 			}
-			this->m_physical_y_dir = { x, y, z };
+			this->m_physical_y_dir = glm::vec3(x, y, z);
 		}
 		else if (tag == "PHYSICAL_CALIBRATION") {
-			if (!(istream >> name >> x >> y >> z >> w)) {
+			std::string name;
+			if (!(linestream >> name >> x >> y >> z >> w)) {
 				std::cerr << std::endl << "[ERROR] [TrackingUtilizer] Can not read values for PHYSICAL_CALIBRATION in \"" << filename.c_str() << "\" in line number: " << lineNmbr << " " <<
 					"[" << __FILE__ << ", " << __FUNCTION__ << ", line " << __LINE__ << "]" << std::endl << std::endl;
 				file.close();
 				break;
 			}
 			if (name == this->m_rigid_body_name) {
-				this->m_calibration_orientation = { w, x, y, z };
+				this->m_calibration_orientation = glm::quat(w, x, y, z);
 				is_calibration_available = true;
 			}
 		}
@@ -365,8 +351,10 @@ bool tracking::TrackingUtilizer::read_params_from_file(void) {
 			file.close();
 			break;
 		}
+
 		lineNmbr++;
 	}
+	file.close();
 
 	// If no calibration orientation is available, use current orientation of rigid body ...
 	if (!is_calibration_available) {
@@ -376,9 +364,9 @@ bool tracking::TrackingUtilizer::read_params_from_file(void) {
 			std::cerr << std::endl << "[ERROR] [TrackingUtilizer] Failed to open \"" << filename.c_str() << "\" for writing. " <<
 				"[" << __FILE__ << ", " << __FUNCTION__ << ", line " << __LINE__ << "]" << std::endl << std::endl;
 		}
-		file << "PHYSICAL_CALIBRATION " << this->m_rigid_body_name.c_str() << " " << this->m_calibration_orientation.x << " " <<
+		file << "\nPHYSICAL_CALIBRATION " << this->m_rigid_body_name.c_str() << " " << this->m_calibration_orientation.x << " " <<
 			this->m_calibration_orientation.y << " " << this->m_calibration_orientation.z << " " << this->m_calibration_orientation.w << std::endl;
-		std::cout << "[INFO] [TrackingUtilizer] Wrote current calibration orientation to \"" << filename.c_str() << "\"" << std::endl;
+		std::cout << "[INFO] [TrackingUtilizer] Wrote current calibration orientation for rigid body \"" << this->m_rigid_body_name << "\" to \"" << filename.c_str() << "\"" << std::endl;
 	}
 
 	file.close();
@@ -609,7 +597,7 @@ bool tracking::TrackingUtilizer::Calibrate(void) {
 		state_calibration = true;
 	}
 	else {
-		this->m_calibration_orientation = { 1.0f, 0.0f, 0.0f, 0.0f };
+		this->m_calibration_orientation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
 	}
 
 	std::cout << "[INFO] [TrackingUtilizer] >>> RIGID BODY \"" << this->m_rigid_body_name.c_str() << "\" CALIBRATION ORIENTATION " <<
@@ -1029,7 +1017,7 @@ bool tracking::TrackingUtilizer::process_screen_interaction(bool process_fov) {
 
 			// Ensure that intersection lies on physical screen (inside of area spanned by pWv and pHv)
 			// Recognise only intersections insides of powerwall screen
-			this->m_current_intersection = { TRACKING_FLOAT_MAX, TRACKING_FLOAT_MAX };
+			this->m_current_intersection = glm::vec2(TRACKING_FLOAT_MAX, TRACKING_FLOAT_MAX);
 			if ((x >= 0.0f) && (y >= 0.0f) && (x <= 1.0f) && (y <= 1.0f)) {
 				//VLTRACE(vislib::Trace::LEVEL_INFO, "Intersection inside of screen. \n");
 				this->m_current_intersection = intersection;

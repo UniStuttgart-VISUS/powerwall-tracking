@@ -67,10 +67,8 @@ namespace tracking {
 
 		/** Data structure for setting parameters as batch. */
 		struct Params {
-			const char* btn_device_name;       /** Name of the button device to use.                                                             */
-			size_t                            btn_device_name_len;
-			const char* rigid_body_name;       /** Name of the rigid body to use.                                                                */
-			size_t                            rigid_body_name_len;
+			std::string                       btn_device_name;       /** Name of the button device to use.                                                             */
+			std::string                       rigid_body_name;       /** Name of the rigid body to use.                                                                */
 			tracking::Button                  select_btn;            /** The button that must be pressed for selection (set to 0 to dissolve link to any button).      */
 			tracking::Button                  rotate_btn;            /** The button that must be pressed for rotation (set to 0 to dissolve link to any button).       */
 			tracking::Button                  translate_btn;         /** The button that must be pressed for translation (set to 0 to dissolve link to any button).    */
@@ -88,6 +86,11 @@ namespace tracking {
 			float                             fov_horiz_angle;       /** Set fixed horizontal angle in degrees for fov.                                                */
 			float                             fov_vert_angle;        /** Set fixed vertical angle in degrees for fov.                                                  */
 			TrackingUtilizer::FovAspectRatio  fov_aspect_ratio;      /** Set fixed aspect ratio for fov for given angle.                                               */
+			float                             physical_height;       /** Set physical height of screen.                                                                */
+			float                             physical_width;        /** Set physical width of screen.                                                                 */
+			glm::vec3                         physical_origin;       /** Set physical origin of screen.                                                                */
+			glm::vec3                         physical_x_dir;        /** Set physical x-direction of screen.                                                           */
+			glm::vec3                         physical_y_dir; 	     /** Set physical y-direction of screen.                                                           */
 		};
 
 		///////////////////////////////////////////////////////////////////////

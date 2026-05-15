@@ -5,6 +5,8 @@
 // <author>Matthias Braun</author>
 
 #include <iostream>
+#include <fstream>
+#include <sstream>
 
 #include "Tracker.h"
 
@@ -34,26 +36,15 @@ bool tracking::Tracker::Initialise(const tracking::Tracker::Params& params) {
 	bool check = true;
 	this->m_initialised = false;
 
-	std::string active_node;
-	try {
-		active_node = std::string(params.active_node);
-		if (active_node.length() != params.active_node_len) {
-			std::cerr << std::endl << "[ERROR] [Tracker] String \"active_node\" has not expected length. " <<
-				"[" << __FILE__ << ", " << __FUNCTION__ << ", line " << __LINE__ << "]" << std::endl << std::endl;
-			check = false;
-		}
-	}
-	catch (const std::exception& e) {
-		std::cerr << std::endl << "[ERROR] [Tracker] Error reading string param 'active_node': " << e.what() <<
-			" [" << __FILE__ << ", " << __FUNCTION__ << ", line " << __LINE__ << "]" << std::endl << std::endl;
-		check = false;
-	}
+	// Overwrite parameters with values from config file
+	tracking::Tracker::Params params_cfg_edit = params;
+	this->m_initialised = this->read_params_from_file(params_cfg_edit);
 
 	this->m_button_devices.clear();
 	std::vector<tracking::VrpnDevice<vrpn_Button_Remote>::Params> vrpn_params;
 	try {
-		for (size_t i = 0; i < params.vrpn_params_count; i++) {
-			vrpn_params.emplace_back(params.vrpn_params[i]);
+		for (size_t i = 0; i < params_cfg_edit.vrpn_params_count; i++) {
+			vrpn_params.emplace_back(params_cfg_edit.vrpn_params[i]);
 		}
 	}
 	catch (const std::exception& e) {
@@ -62,22 +53,19 @@ bool tracking::Tracker::Initialise(const tracking::Tracker::Params& params) {
 		check = false;
 	}
 
-	if (!this->m_motion_devices.Initialise(params.natnet_params)) {
-		check = false;
-	}
+	check &= this->m_motion_devices.Initialise(params_cfg_edit.natnet_params);
 
 	if (check) {
-		m_active_node = active_node;
+		m_active_node = params_cfg_edit.active_node;
 
 		for (int i = 0; i < vrpn_params.size(); ++i) {
 			this->m_button_devices.emplace_back(std::make_unique<tracking::VrpnButtonDevice>());
 			if (!this->m_button_devices.back()->Initialise(vrpn_params[i])) {
-				check = false;
+				this->m_initialised = false;
 			}
 		}
 
 		this->print_params();
-		this->m_initialised = true;
 	}
 
 	return this->m_initialised;
@@ -185,6 +173,95 @@ bool tracking::Tracker::GetData(const std::string& i_rigid_body, const std::stri
 			break; /// Break if button device is found.
 		}
 	}
+
+	return true;
+}
+
+
+bool tracking::Tracker::read_params_from_file(tracking::Tracker::Params& params) {
+
+	std::string line, tag;
+	std::string value_string;
+	unsigned int value_uint;
+
+	const std::string filename = TRACKING_CONFIG_FILENAME; // defined in cmake
+
+	std::ifstream file(filename);
+	if (!file.good()) {
+		std::cerr << std::endl << "[ERROR] [Tracker] Failed to open \"" << filename.c_str() << "\" for reading. " <<
+			"[" << __FILE__ << ", " << __FUNCTION__ << ", line " << __LINE__ << "]" << std::endl << std::endl;
+	}
+
+	unsigned int lineNmbr = 1;
+	while (std::getline(file, line))
+	{
+		if (line == "") {
+			lineNmbr++;
+			continue; // Ignore empty lines
+		}
+
+		std::istringstream linestream(line);
+		if (!(linestream >> tag)) {
+			std::cerr << std::endl << "[ERROR] [TrackingUtilizer] Can not read line tag in \"" << filename.c_str() << "\" in line number: " << lineNmbr << " " <<
+				"[" << __FILE__ << ", " << __FUNCTION__ << ", line " << __LINE__ << "]" << std::endl << std::endl;
+			break;
+		}
+
+		if (tag[0] == '#') {
+			lineNmbr++;
+			continue; // Ignore commented lines
+		}
+
+		if (tag == "CLIENT_IP") {
+			if (!(linestream >> value_string)) {
+				std::cerr << std::endl << "[ERROR] [Tracker] Can not read value for CLIENT_IP in \"" << filename.c_str() << "\" in line number: " << lineNmbr << " " <<
+					"[" << __FILE__ << ", " << __FUNCTION__ << ", line " << __LINE__ << "]" << std::endl << std::endl;
+				file.close();
+				break;
+			}
+			params.natnet_params.client_ip = value_string;
+		}
+		else if (tag == "SERVER_IP") {
+			if (!(linestream >> value_string)) {
+				std::cerr << std::endl << "[ERROR] [Tracker] Can not read value for SERVER_IP in \"" << filename.c_str() << "\" in line number: " << lineNmbr << " " <<
+					"[" << __FILE__ << ", " << __FUNCTION__ << ", line " << __LINE__ << "]" << std::endl << std::endl;
+				file.close();
+				break;
+			}
+			params.natnet_params.server_ip = value_string;
+			params.vrpn_params->server_ip = value_string;
+		}
+		else if (tag == "NATNET_CMD_PORT") {
+			if (!(linestream >> value_uint)) {
+				std::cerr << std::endl << "[ERROR] [Tracker] Can not read value for NATNET_CMD_PORT in \"" << filename.c_str() << "\" in line number: " << lineNmbr << " " <<
+					"[" << __FILE__ << ", " << __FUNCTION__ << ", line " << __LINE__ << "]" << std::endl << std::endl;
+				file.close();
+				break;
+			}
+			params.natnet_params.cmd_port = value_uint;
+		}
+		else if (tag == "NATNET_DATA_PORT") {
+			if (!(linestream >> value_uint)) {
+				std::cerr << std::endl << "[ERROR] [Tracker] Can not read value for NATNET_DATA_PORT in \"" << filename.c_str() << "\" in line number: " << lineNmbr << " " <<
+					"[" << __FILE__ << ", " << __FUNCTION__ << ", line " << __LINE__ << "]" << std::endl << std::endl;
+				file.close();
+				break;
+			}
+			params.natnet_params.data_port = value_uint;
+		}
+		else if (tag == "VRPN_PORT") {
+			if (!(linestream >> value_uint)) {
+				std::cerr << std::endl << "[ERROR] [Tracker] Can not read value for VRPN_PORT in \"" << filename.c_str() << "\" in line number: " << lineNmbr << " " <<
+					"[" << __FILE__ << ", " << __FUNCTION__ << ", line " << __LINE__ << "]" << std::endl << std::endl;
+				file.close();
+				break;
+			}
+			params.vrpn_params->port = value_uint;
+		}
+
+		lineNmbr++;
+	}
+	file.close();
 
 	return true;
 }

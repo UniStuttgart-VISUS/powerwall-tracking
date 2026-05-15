@@ -30,8 +30,7 @@ namespace tracking {
 
 		/** Data structure for setting parameters as batch. */
 		struct Params {
-			const char* active_node;      /** The name of the active node which should receive the tracking data exclusively. */
-			size_t                                            active_node_len;
+			std::string                                       active_node;      /** The name of the active node which should receive the tracking data exclusively. */
 			tracking::VrpnDevice<vrpn_Button_Remote>::Params* vrpn_params;
 			size_t                                            vrpn_params_count;
 			tracking::NatNetDevicePool::Params                natnet_params;
@@ -143,6 +142,9 @@ namespace tracking {
 		**********************************************************************/
 
 		void print_params(void);
+
+		/** Read physical values from file. */
+		bool read_params_from_file(tracking::Tracker::Params& params);
 
 	};
 

@@ -22,7 +22,9 @@ endif()
 # Options
 option(TRACKING_USE_NATNET "Use NatNet SDK" ON)
 option(TRACKING_TEST_PROGRAM "Add the test program" ON)
-set(TRACKING_CONFIG_FILE "${CMAKE_SOURCE_DIR}/tracking/conf/tracking.conf" CACHE PATH "Config file for tracking")
+
+set(TRACKING_CONFIG_FILENAME "tracking.cfg")
+set(TRACKING_CONFIG_FILE "${CMAKE_SOURCE_DIR}/tracking/config/${TRACKING_CONFIG_FILENAME}" CACHE PATH "Config file for tracking")
 
 ###############################
 # EXTERNALS

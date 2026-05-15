@@ -33,43 +33,15 @@ bool tracking::NatNetDevicePool::Initialise(const NatNetDevicePool::Params& para
 	this->m_initialised = false;
 	this->m_natnet_client = nullptr;
 
-	std::string client_ip;
-	try {
-		client_ip = std::string(params.client_ip);
-		if (client_ip.length() != params.client_ip_len) {
-			std::cerr << std::endl << "[ERROR] [NatNetClient] String \"client_ip\" has not expected length. " <<
-				"[" << __FILE__ << ", " << __FUNCTION__ << ", line " << __LINE__ << "]" << std::endl << std::endl;
-			check = false;
-		}
-		if (client_ip.empty()) {
-			std::cerr << std::endl << "[ERROR] [NatNetClient] Parameter \"client_ip\" must not be empty string. " <<
-				"[" << __FILE__ << ", " << __FUNCTION__ << ", line " << __LINE__ << "]" << std::endl << std::endl;
-			check = false;
-		}
-	}
-	catch (const std::exception& e) {
-		std::cerr << std::endl << "[ERROR] [Tracker] Error reading string param 'active_node': " << e.what() <<
-			" [" << __FILE__ << ", " << __FUNCTION__ << ", line " << __LINE__ << "]" << std::endl << std::endl;
+	if (params.client_ip.empty()) {
+		std::cerr << std::endl << "[ERROR] [NatNetClient] Parameter \"client_ip\" must not be empty string. " <<
+			"[" << __FILE__ << ", " << __FUNCTION__ << ", line " << __LINE__ << "]" << std::endl << std::endl;
 		check = false;
 	}
 
-	std::string server_ip;
-	try {
-		server_ip = std::string(params.server_ip);
-		if (server_ip.length() != params.server_ip_len) {
-			std::cerr << std::endl << "[ERROR] [NatNetClient] String \"server_ip\" has not expected length. " <<
-				"[" << __FILE__ << ", " << __FUNCTION__ << ", line " << __LINE__ << "]" << std::endl << std::endl;
-			check = false;
-		}
-		if (server_ip.empty()) {
-			std::cerr << std::endl << "[ERROR] [NatNetClient] Parameter \"server_ip\" must not be empty string. " <<
-				"[" << __FILE__ << ", " << __FUNCTION__ << ", line " << __LINE__ << "]" << std::endl << std::endl;
-			check = false;
-		}
-	}
-	catch (const std::exception& e) {
-		std::cerr << std::endl << "[ERROR] [Tracker] Error reading string param 'active_node': " << e.what() <<
-			" [" << __FILE__ << ", " << __FUNCTION__ << ", line " << __LINE__ << "]" << std::endl << std::endl;
+	if (params.client_ip.empty()) {
+		std::cerr << std::endl << "[ERROR] [NatNetClient] Parameter \"server_ip\" must not be empty string. " <<
+			"[" << __FILE__ << ", " << __FUNCTION__ << ", line " << __LINE__ << "]" << std::endl << std::endl;
 		check = false;
 	}
 
@@ -87,8 +59,8 @@ bool tracking::NatNetDevicePool::Initialise(const NatNetDevicePool::Params& para
 
 	if (check) {
 		this->m_callback_counter = 0;
-		this->m_client_ip = client_ip;
-		this->m_server_ip = server_ip;
+		this->m_client_ip = params.client_ip;
+		this->m_server_ip = params.server_ip;
 
 		this->m_cmd_port = params.cmd_port;
 		this->m_data_port = params.data_port;

@@ -24,7 +24,9 @@ target_sources(${PROJECT_NAME} PRIVATE
 include_directories("${PROJECT_SOURCE_DIR}/include" "${PROJECT_SOURCE_DIR}/src")
 
 string(TOUPPER ${PROJECT_NAME} EXPORT_NAME)
-target_compile_definitions(${PROJECT_NAME} PRIVATE "${EXPORT_NAME}_EXPORTS")
+target_compile_definitions(${PROJECT_NAME} PRIVATE "${EXPORT_NAME}_EXPORTS" )
+
+target_compile_definitions(${PROJECT_NAME} PRIVATE  "TRACKING_CONFIG_FILENAME=\"${TRACKING_CONFIG_FILENAME}\"")
 
 target_link_libraries(${PROJECT_NAME} PUBLIC natnet vrpn pwtglm)
 
